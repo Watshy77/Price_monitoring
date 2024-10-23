@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-import requests, sys, re, os
+import requests, re, os
+import matplotlib.pyplot as plt
 
 BASE_URL = "https://books.toscrape.com/"
 
@@ -101,5 +102,83 @@ def fetch_all_categories():
         print(f"Fetching books for category: {category_name}")
         fetch_books_data(category_url)
 
+def create_pie_chart():
+    csv_folder = "CSV"
+    category_counts = {}
+
+    for csv_file in os.listdir(csv_folder):
+        if csv_file.endswith(".csv"):
+            category = csv_file.replace(".csv", "")
+            total_stock = 0
+            with open(os.path.join(csv_folder, csv_file), mode='r', encoding='utf-8') as file:
+                lines = file.readlines()[1:]
+                for line in lines:
+                    if not line.strip():
+                        continue
+                    data = line.split(',')
+                    if len(data) > 5:
+                        stock = int(data[5].strip())
+                    else:
+                        print(f"Skipping line due to unexpected format: {line}")
+                        continue
+                    total_stock += stock
+            category_counts[category] = total_stock
+
+    categories = list(category_counts.keys())
+    counts = list(category_counts.values())
+
+    plt.figure(figsize=(12, 8))
+    wedges, texts, autotexts = plt.pie(counts, labels=categories, autopct='%1.1f%%', startangle=140, textprops=dict(color="w"))
+
+    for text in texts:
+        text.set_fontsize(10)
+    for autotext in autotexts:
+        autotext.set_fontsize(8)
+
+    plt.legend(wedges, categories, title="Categories", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1), ncol=2)
+    plt.title('Distribution of Books by Category (Weighted by Stock)')
+    plt.axis('equal')
+    plt.subplots_adjust(right=0.7)
+    plt.show()
+
+def create_bar_chart():
+    csv_folder = "CSV"
+    category_prices = {}
+
+    for csv_file in os.listdir(csv_folder):
+        if csv_file.endswith(".csv"):
+            category = csv_file.replace(".csv", "")
+            total_price = 0
+            total_stock = 0
+            with open(os.path.join(csv_folder, csv_file), mode='r', encoding='utf-8') as file:
+                lines = file.readlines()[1:]
+                for line in lines:
+                    if not line.strip():
+                        continue
+                    data = line.split(',')
+                    if len(data) > 5:
+                        price_including_tax = float(data[3].replace('£', '').replace('Â', '').replace(',', '.').strip())
+                        stock = int(data[5].strip())
+                    else:
+                        print(f"Skipping line due to unexpected format: {line}")
+                        continue
+                    total_price += price_including_tax * stock
+                    total_stock += stock
+            if total_stock > 0:
+                category_prices[category] = total_price / total_stock
+
+    categories = list(category_prices.keys())
+    avg_prices = list(category_prices.values())
+
+    plt.figure(figsize=(14, 8))
+    plt.barh(categories, avg_prices, color='skyblue')
+    plt.xlabel('Average Price (£)')
+    plt.ylabel('Categories')
+    plt.title('Average Book Price by Category (Weighted by Stock)')
+    plt.tight_layout()
+    plt.show()
+
 if __name__ == "__main__":
     fetch_all_categories()
+    create_pie_chart()
+    create_bar_chart()

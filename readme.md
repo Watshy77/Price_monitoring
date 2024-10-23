@@ -33,7 +33,7 @@ pip install -r requirements.txt
 
 ### Utilisation du programme
 
-Pour utiliser le programme permettant d'obtenir plusieurs information sur les livres par catégorie et également de télécharger les images par catégories, éxécuter la commande suivante:
+Pour utiliser le programme permettant d'obtenir plusieurs information sur différents livres, éxécuter la commande suivante:
 
 Sous MacOS/Linux :
 ```sh
