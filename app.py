@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import requests, sys, re
+import requests, sys, re, os
 
 BASE_URL = "https://books.toscrape.com/"
 
@@ -19,7 +19,19 @@ def fetch_books_data(category_url):
         product_description = soup.find_all("p")[3].text.replace(",", " ")
         category = soup.find_all("a")[3].text.replace(",", " ")
         review_rating = soup.find("p", class_="star-rating")['class'][1].replace(",", " ")
-        image_url = soup.find("img")['src'].replace(",", " ")
+        image_url = soup.find("img")['src'].replace("../", "")
+        image_url = f"{BASE_URL}{image_url}"
+        image_response = requests.get(image_url)
+        if image_response.status_code == 200:
+            category_folder = os.path.join("IMAGES", category.lower().replace(" ", "_"))
+            if not os.path.exists(category_folder):
+                os.makedirs(category_folder)
+            sanitized_title = title.replace("/", "_")
+            image_path = os.path.join(category_folder, f"{sanitized_title}.jpg")
+            with open(image_path, 'wb') as image_file:
+                image_file.write(image_response.content)
+        else:
+            print(f"Failed to download image {image_url}")
         fichier_csv.write(f"{url},{upc},{title},{price_including_tax},")
         fichier_csv.write(f"{price_excluding_tax},{number_available},{product_description},")
         fichier_csv.write(f"{category},{review_rating},{image_url}\n")
@@ -41,7 +53,11 @@ def fetch_books_data(category_url):
     else:
         csv_filename = "books.csv"
 
-    with open(csv_filename, mode='w', newline='', encoding='utf-8') as fichier_csv:
+    csv_folder = "CSV"
+    if not os.path.exists(csv_folder):
+        os.makedirs(csv_folder)
+    csv_filepath = os.path.join(csv_folder, csv_filename)
+    with open(csv_filepath, mode='w', newline='', encoding='utf-8') as fichier_csv:
         fichier_csv.write("product_page_url,universal_product_code (upc),title,price_including_tax,")
         fichier_csv.write("price_excluding_tax,number_available,product_description,category,review_rating,image_url\n")
         for book in liste:
