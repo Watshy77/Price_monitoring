@@ -1,3 +1,4 @@
 env
 CSV
-Images
+IMAGES
+.DS_Store

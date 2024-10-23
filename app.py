@@ -21,20 +21,24 @@ def fetch_books_data(category_url):
         review_rating = soup.find("p", class_="star-rating")['class'][1].replace(",", " ")
         image_url = soup.find("img")['src'].replace("../", "")
         image_url = f"{BASE_URL}{image_url}"
-        image_response = requests.get(image_url)
-        if image_response.status_code == 200:
-            category_folder = os.path.join("IMAGES", category.lower().replace(" ", "_"))
-            if not os.path.exists(category_folder):
-                os.makedirs(category_folder)
-            sanitized_title = title.replace("/", "_")
-            image_path = os.path.join(category_folder, f"{sanitized_title}.jpg")
-            with open(image_path, 'wb') as image_file:
-                image_file.write(image_response.content)
-        else:
-            print(f"Failed to download image {image_url}")
+        download_images(image_url, "IMAGES", title, category)
         fichier_csv.write(f"{url},{upc},{title},{price_including_tax},")
         fichier_csv.write(f"{price_excluding_tax},{number_available},{product_description},")
         fichier_csv.write(f"{category},{review_rating},{image_url}\n")
+    
+    def download_images(url, folder, image_name, category):
+        image_name = image_name.replace("/", " ") + ".jpg"
+        category_folder = os.path.join(folder, category)
+        if not os.path.exists(category_folder):
+            os.makedirs(category_folder)
+        response = requests.get(url)
+        if response.status_code != 200:
+            print(f"Failed to fetch the image {url}")
+            return
+        image_path = os.path.join(category_folder, image_name)
+        with open(image_path, mode='wb') as image_file:
+            image_file.write(response.content)
+        print(f"Successfully downloaded the image {image_name} in category {category}")
 
     url = f"{BASE_URL}{category_url}"
     response = requests.get(url)
@@ -76,9 +80,10 @@ def fetch_books_data(category_url):
                 for book in liste:
                     write_book_data(f"{BASE_URL}catalogue/{book.h3.a['href']}", fichier_csv)
 
-    print(f"Successfully fetched and saved to {csv_filename}")
+    print(f"Successfully fetched books data for this category")
+    print(f"------------------------------------------------------------------------------------------------------------")
 
-def fetch_categories(category):
+def fetch_all_categories():
     response = requests.get(BASE_URL)
 
     if response.status_code != 200:
@@ -86,19 +91,15 @@ def fetch_categories(category):
         return
 
     soup = BeautifulSoup(response.text, "html.parser")
-    liste = soup.find("ul", class_="nav-list").find_all("li")
+    categories = soup.find("ul", class_="nav-list").find_all("li")
 
-    for item in liste:
+    for item in categories:
         category_name = item.a.text.strip()
-        if category_name == category:
-            category_url = item.a['href']
-            fetch_books_data(category_url)
-            break
+        if category_name.lower() == "books":
+            continue
+        category_url = item.a['href']
+        print(f"Fetching books for category: {category_name}")
+        fetch_books_data(category_url)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python app.py <category>")
-        sys.exit(1)
-
-    category = " ".join(sys.argv[1:]).lower().title()
-    fetch_categories(category)
+    fetch_all_categories()

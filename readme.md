@@ -33,24 +33,14 @@ pip install -r requirements.txt
 
 ### Utilisation du programme
 
-Pour utiliser le programme permettant d'obtenir plusieurs information sur les livres par catégorie, éxécuter la commande suivante:
+Pour utiliser le programme permettant d'obtenir plusieurs information sur les livres par catégorie et également de télécharger les images par catégories, éxécuter la commande suivante:
 
 Sous MacOS/Linux :
 ```sh
-python3 app.py <category>
-```
-
-#### Exemple :
-```sh
-python3 app.py health
+python3 app.py
 ```
 
 Sous Windows :
 ```sh
-python app.py <category>
-```
-
-#### Exemple :
-```sh
-python app.py historical fiction
+python app.py
 ```
